@@ -6,18 +6,18 @@ use Dusterio\LinkPreview\Contracts\LinkInterface;
 use Dusterio\LinkPreview\Contracts\ReaderInterface;
 use Dusterio\LinkPreview\Contracts\ParserInterface;
 use Dusterio\LinkPreview\Contracts\PreviewInterface;
-use Dusterio\LinkPreview\Models\MediaPreview;
 use Dusterio\LinkPreview\Readers\HttpReader;
+use Dusterio\LinkPreview\Models\MediaPreview;
 
 /**
- * Class YouTubeParser
+ * Class SoundClourParser
  */
-class VimeoParser extends BaseParser implements ParserInterface
+class SoundCloudParser extends BaseParser implements ParserInterface
 {
     /**
-     * Url validation pattern based on http://stackoverflow.com/questions/13286785/get-video-id-from-vimeo-url/22071143#comment48088417_22071143
+     * Url validation pattern 
      */
-    const PATTERN = '/^.*(?:vimeo.com)\\/(?:channels\\/|groups\\/[^\\/]*\\/videos\\/|album\\/\\d+\\/video\\/|video\\/|)(\\d+)(?:$|\\/|\\?)/';
+    const PATTERN = '/((https:\/\/)|(http:\/\/)|(www.)|(m\.)|(\s))+(soundcloud.com\/)+[a-zA-Z0-9\-\.]+(\/)+[a-zA-Z0-9\-\.]+/';
 
     /**
      * @param ReaderInterface $reader
@@ -34,7 +34,7 @@ class VimeoParser extends BaseParser implements ParserInterface
      */
     public function __toString()
     {
-        return 'vimeo';
+        return 'soundcloud';
     }
 
     /**
@@ -53,9 +53,8 @@ class VimeoParser extends BaseParser implements ParserInterface
         preg_match(static::PATTERN, $link->getUrl(), $matches);
 
         $this->getPreview()
-            ->setId($matches[1])
             ->setEmbed(
-                '<iframe id="viplayer" width="640" height="390" src="//player.vimeo.com/video/'.$this->getPreview()->getId().'"" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
+                '<iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url='.urlencode($link->getUrl()).'&color=%230a2c5f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe>'
             );
 
         return $this;

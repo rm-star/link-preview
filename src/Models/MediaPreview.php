@@ -7,15 +7,15 @@ use Dusterio\LinkPreview\Traits\HasExportableFields;
 use Dusterio\LinkPreview\Traits\HasImportableFields;
 
 /**
- * Class VideoLink
+ * Class MediaLink
  */
-class VideoPreview implements PreviewInterface
+class MediaPreview implements PreviewInterface
 {
     use HasExportableFields;
     use HasImportableFields;
 
     /**
-     * @var string $embed Video embed code
+     * @var string $embed Media embed code
      */
     private $embed;
 
@@ -25,7 +25,7 @@ class VideoPreview implements PreviewInterface
     private $video;
 
     /**
-     * @var string $id Video identification code
+     * @var string $id Media identification code
      */
     private $id;
 

@@ -6,7 +6,7 @@ use Dusterio\LinkPreview\Contracts\LinkInterface;
 use Dusterio\LinkPreview\Contracts\ReaderInterface;
 use Dusterio\LinkPreview\Contracts\ParserInterface;
 use Dusterio\LinkPreview\Contracts\PreviewInterface;
-use Dusterio\LinkPreview\Models\VideoPreview;
+use Dusterio\LinkPreview\Models\MediaPreview;
 use Dusterio\LinkPreview\Readers\HttpReader;
 
 /**
@@ -26,7 +26,7 @@ class YouTubeParser extends BaseParser implements ParserInterface
     public function __construct(ReaderInterface $reader = null, PreviewInterface $preview = null)
     {
         $this->setReader($reader ?: new HttpReader());
-        $this->setPreview($preview ?: new VideoPreview());
+        $this->setPreview($preview ?: new MediaPreview());
     }
 
     /**
