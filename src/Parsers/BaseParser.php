@@ -19,6 +19,16 @@ abstract class BaseParser
     private $preview;
 
     /**
+     * @var width
+     */
+    protected $width;
+
+    /**
+     * @var height
+     */
+    protected $height;
+
+    /**
      * @inheritdoc
      */
     public function getPreview()
@@ -63,5 +73,15 @@ abstract class BaseParser
     protected function readLink(LinkInterface $link)
     {
         return $this->getReader()->readLink($link);
+    }
+
+    public function setWidth($width)
+    {
+        $this->width = $width;
+    }
+
+    public function setHeight($height)
+    {
+        $this->height = $height;
     }
 }

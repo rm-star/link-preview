@@ -59,4 +59,16 @@ interface ParserInterface
      * @return $this
      */
     public function parseLink(LinkInterface $link);
+
+    /**
+     * Set Optional Width
+     * @param  $width
+     */
+    public function setWidth($width);
+
+    /**
+     * Set Optional Height
+     * @param  $height
+     */
+    public function setHeight($height);
 }

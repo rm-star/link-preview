@@ -54,18 +54,22 @@ class SpotifyParser extends BaseParser implements ParserInterface
         preg_match(static::TRACK_PATTERN, $link->getUrl(), $matches);
 	
 	if ( isset($matches[2]) ){
+	    $width = $this->width;
+	    $height = $this->height;
             $this->getPreview()
                 ->setId($matches[2])
                 ->setEmbed(
-                    '<iframe src="https://open.spotify.com/embed/track/'.$this->getPreview()->getId().'" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>'
+                    '<iframe src="https://open.spotify.com/embed/track/'.$this->getPreview()->getId().'" width="'.$width.'" height="'.$height.'" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>'
                 );
         } else {
             preg_match(static::PLAYLIST_PATTERN, $link->getUrl(), $matches);
 	
+	    $width = $this->width;
+	    $height = $this->height;
             $this->getPreview()
                 ->setId($matches[3])
                 ->setEmbed(
-                    '<iframe src="https://open.spotify.com/embed/user/'.$matches[2].'/playlist/'.$matches[3].'" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>'
+                    '<iframe src="https://open.spotify.com/embed/user/'.$matches[2].'/playlist/'.$matches[3].'" width="'.$width.'" height="'.$height.'" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>'
                 );
         }
 

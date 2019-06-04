@@ -9,6 +9,7 @@ use Dusterio\LinkPreview\Parsers\YouTubeParser;
 use Dusterio\LinkPreview\Parsers\VimeoParser;
 use Dusterio\LinkPreview\Parsers\SoundCloudParser;
 use Dusterio\LinkPreview\Parsers\SpotifyParser;
+use Dusterio\LinkPreview\Parsers\TwitterParser;
 use Dusterio\LinkPreview\Models\Link;
 use Dusterio\LinkPreview\Exceptions\UnknownParserException;
 
@@ -25,11 +26,23 @@ class Client
     private $link;
 
     /**
+     * @var Optional width of output $width
+     */
+    private $width;
+
+    /**
+     * @var Optional height of output $height
+     */
+    private $height;
+
+    /**
      * @param string $url Request address
      */
-    public function __construct($url = null)
+    public function __construct($url = null, $width = null, $height = null)
     {
         if ($url) $this->setUrl($url);
+        if ($width) $this->setWidth($width);
+        if ($height) $this->setHeight($height);
         $this->addDefaultParsers();
     }
 
@@ -42,8 +55,9 @@ class Client
         $parsed = [];
 
         foreach ($this->getParsers() as $name => $parser) {
-            if ($parser->canParseLink($this->link))
+            if ($parser->canParseLink($this->link)) {
                 $parsed[$name] = $parser->parseLink($this->link)->getPreview();
+            }
         }
 
         return $parsed;
@@ -72,6 +86,8 @@ class Client
      */
     public function addParser(ParserInterface $parser)
     {
+        $parser->setWidth( $this->width );
+        $parser->setHeight( $this->height );
         $this->parsers = [(string) $parser => $parser] + $this->parsers;
 
         return $this;
@@ -129,6 +145,32 @@ class Client
     }
 
     /**
+     * Set optional width of output
+     *
+     * @param width
+     * @return $this
+     */
+    public function setWidth($width)
+    {
+        $this->width = $width;
+
+        return $this;
+    }
+
+    /**
+     * Set optional height of output
+     *
+     * @param height
+     * @return $this
+     */
+    public function setHeight($height)
+    {
+        $this->height = $height;
+
+        return $this;
+    }
+
+    /**
      * Remove parser from parsers list
      *
      * @param string $name Parser name
@@ -154,5 +196,6 @@ class Client
         $this->addParser(new VimeoParser());
         $this->addParser(new SoundCloudParser());
         $this->addParser(new SpotifyParser());
+        $this->addParser(new TwitterParser());
     }
 }

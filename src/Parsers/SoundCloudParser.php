@@ -52,9 +52,11 @@ class SoundCloudParser extends BaseParser implements ParserInterface
     {
         preg_match(static::PATTERN, $link->getUrl(), $matches);
 
+        $width = $this->width;
+        $height = $this->height;
         $this->getPreview()
             ->setEmbed(
-                '<iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url='.urlencode($link->getUrl()).'&color=%230a2c5f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe>'
+                '<iframe width="'.$width.'" height="'.$height.'" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url='.urlencode($link->getUrl()).'&color=%230a2c5f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe>'
             );
 
         return $this;

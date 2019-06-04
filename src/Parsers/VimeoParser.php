@@ -52,10 +52,12 @@ class VimeoParser extends BaseParser implements ParserInterface
     {
         preg_match(static::PATTERN, $link->getUrl(), $matches);
 
+        $width = $this->width;
+        $height = $this->height;
         $this->getPreview()
             ->setId($matches[1])
             ->setEmbed(
-                '<iframe id="viplayer" width="640" height="390" src="//player.vimeo.com/video/'.$this->getPreview()->getId().'"" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
+                '<iframe id="viplayer" width="'.$width.'" height="'.$height.'" src="//player.vimeo.com/video/'.$this->getPreview()->getId().'"" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
             );
 
         return $this;
