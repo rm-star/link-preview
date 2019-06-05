@@ -19,7 +19,7 @@ class TwitterParser extends BaseParser implements ParserInterface
 {
      /*Url validation pattern 
      */
-    const PATTERN = '/((https:\/\/)|(http:\/\/)|(www.)|(m\.)|(\s))+(soundcloud.com\/)+[a-zA-Z0-9\-\.]+(\/)+[a-zA-Z0-9\-\.]+/';
+    const PATTERN = '/http(?:s)?:\/\/(?:www\.)?twitter\.com\/([a-zA-Z0-9_]+)/';
 
 
     /**
@@ -100,7 +100,7 @@ class TwitterParser extends BaseParser implements ParserInterface
      */
     public function canParseLink(LinkInterface $link)
     {
-        return !filter_var($link->getUrl(), FILTER_VALIDATE_URL) === false;
+        return (preg_match(static::PATTERN, $link->getUrl()));
     }
 
     /**
