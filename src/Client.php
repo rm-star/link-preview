@@ -8,6 +8,7 @@ use Dusterio\LinkPreview\Parsers\HtmlParser;
 use Dusterio\LinkPreview\Parsers\YouTubeParser;
 use Dusterio\LinkPreview\Parsers\VimeoParser;
 use Dusterio\LinkPreview\Parsers\SoundCloudParser;
+use Dusterio\LinkPreview\Parsers\ImgUrParser;
 use Dusterio\LinkPreview\Parsers\SpotifyParser;
 use Dusterio\LinkPreview\Parsers\TwitterParser;
 use Dusterio\LinkPreview\Models\Link;
@@ -195,6 +196,7 @@ class Client
         $this->addParser(new YouTubeParser());
         $this->addParser(new VimeoParser());
         $this->addParser(new SoundCloudParser());
+        $this->addParser(new ImgurParser());
         $this->addParser(new SpotifyParser());
         $this->addParser(new TwitterParser());
     }
