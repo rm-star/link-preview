@@ -9,7 +9,7 @@ use Dusterio\LinkPreview\Contracts\ParserInterface;
 use Dusterio\LinkPreview\Exceptions\ConnectionErrorException;
 use Dusterio\LinkPreview\Models\Link;
 use Dusterio\LinkPreview\Readers\HttpReader;
-use Dusterio\LinkPreview\Models\MediaPreview;
+use Dusterio\LinkPreview\Models\HtmlPreview;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
@@ -19,9 +19,45 @@ class ImgUrParser extends BaseParser implements ParserInterface
 {
      /*Url validation pattern 
      */
-    /* const PATTERN = '/(?>https?:)?\/\/(\w+\.)?imgur\.com\/(\S*)(\.[a-zA-Z]{3})/';*/
     const PATTERN = '/(?>https?:)?\/\/(?:\w+\.)?imgur\.com\/(\S*)/';
 
+
+    /**
+     * Supported HTML tags
+     *
+     * @var array
+     */
+    private $tags = [
+        'cover' => [
+            ['selector' => 'meta[property="twitter:image"]', 'attribute' => 'content'],
+            ['selector' => 'meta[property="og:image"]', 'attribute' => 'content'],
+            ['selector' => 'meta[itemprop="image"]', 'attribute' => 'content'],
+        ],
+
+        'title' => [
+            ['selector' => 'meta[property="twitter:title"]', 'attribute' => 'content'],
+            ['selector' => 'meta[property="og:title"]', 'attribute' => 'content'],
+            ['selector' => 'meta[itemprop="name"]', 'attribute' => 'content'],
+            ['selector' => 'title']
+        ],
+
+        'description' => [
+            ['selector' => 'meta[property="twitter:description"]', 'attribute' => 'content'],
+            ['selector' => 'meta[property="og:description"]', 'attribute' => 'content'],
+            ['selector' => 'meta[itemprop="description"]', 'attribute' => 'content'],
+            ['selector' => 'meta[name="description"]', 'attribute' => 'content'],
+        ],
+
+        'video' => [
+            ['selector' => 'meta[property="twitter:player:stream"]', 'attribute' => 'content'],
+            ['selector' => 'meta[property="og:video"]', 'attribute' => 'content'],
+        ],
+
+        'videoType' => [
+            ['selector' => 'meta[property="twitter:player:stream:content_type"]', 'attribute' => 'content'],
+            ['selector' => 'meta[property="og:video:type"]', 'attribute' => 'content'],
+        ],
+    ];
 
     /**
      * Smaller images will be ignored
@@ -37,7 +73,7 @@ class ImgUrParser extends BaseParser implements ParserInterface
     public function __construct(ReaderInterface $reader = null, PreviewInterface $preview = null)
     {
         $this->setReader($reader ?: new HttpReader());
-        $this->setPreview($preview ?: new MediaPreview());
+        $this->setPreview($preview ?: new HtmlPreview());
     }
 
     /**
@@ -72,20 +108,16 @@ class ImgUrParser extends BaseParser implements ParserInterface
      */
     public function parseLink(LinkInterface $link)
     {
-        preg_match(static::PATTERN, $link->getUrl(), $matches);                                  
-                                                                                                 
-        $full_link_id = $matches[1];                                                             
-        $link_id = explode( ".", $full_link_id);                                                 
-                                                                                                 
-                                                                                                 
-        $width = $this->width;                                                                   
-        $height = $this->height;                                                                 
-        $this->getPreview()                                                                      
-            ->setId($link_id[0])                                                                 
-            ->setEmbed(                                                                          
-'<blockquote class="imgur-embed-pub" lang="en" data-id="'.$this->getPreview()->getId().'"><a href="//imgur.com/'.$this->getPreview()->getId().'"></a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>'
-            );                                                                                                                                                                      
-                                                                                                                                                                                    
+        $link = $this->readLink($link);
+
+        if (!$link->isUp()) throw new ConnectionErrorException();
+
+        if ($link->isHtml()) {
+            $this->getPreview()->update($this->parseHtml($link));
+        } else if ($link->isImage()) {
+            $this->getPreview()->update($this->parseImage($link));
+        }
+
         return $this;
     }
 
@@ -103,4 +135,67 @@ class ImgUrParser extends BaseParser implements ParserInterface
         ];
     }
 
+    /**
+     * Extract required data from html source
+     * @param LinkInterface $link
+     * @return array
+     */
+    protected function parseHtml(LinkInterface $link)
+    {
+        $images = [];
+
+        try {
+            $parser = new Crawler();
+	    $parser->addHtmlContent($link->getContent());
+
+            // Parse all known tags
+            foreach($this->tags as $tag => $selectors) {
+                foreach($selectors as $selector) {
+                    if ($parser->filter($selector['selector'])->count() > 0) {
+                        if (isset($selector['attribute'])) {
+                            ${$tag} = $parser->filter($selector['selector'])->first()->attr($selector['attribute']);
+                        } else {
+                            ${$tag} = $parser->filter($selector['selector'])->first()->text();
+                        }
+
+                        break;
+                    }
+                }
+
+                // Default is empty string
+                if (!isset(${$tag})) ${$tag} = '';
+            }
+
+            // Parse all images on this page
+            foreach($parser->filter('img') as $image) {
+                if (!$image->hasAttribute('src')) continue;
+                if (filter_var($image->getAttribute('src'), FILTER_VALIDATE_URL) === false) continue;
+
+                // This is not bulletproof, actual image maybe bigger than tags
+                if ($image->hasAttribute('width') && $image->getAttribute('width') < $this->imageMinimumWidth) continue;
+                if ($image->hasAttribute('height') && $image->getAttribute('height') < $this->imageMinimumHeight) continue;
+
+                $images[] = $image->getAttribute('src');
+            }
+        } catch (\InvalidArgumentException $e) {
+            // Ignore exceptions
+        }
+
+        $images = array_unique($images);
+
+        preg_match(static::PATTERN, $link->getUrl(), $matches);                                             
+                                                                                                            
+        $full_link_id = $matches[1];                                                                        
+        $link_id = explode( ".", $full_link_id);                                                            
+        $link_id = str_replace('gallery/', 'a/', $link_id[0]);                                                            
+                                                                                                            
+                                                                                                            
+        $width = $this->width;                                                                              
+        $height = $this->height;                                                                            
+                                                                                                                                                                                    
+$cover = '<blockquote class="imgur-embed-pub" lang="en" data-id="'.$link_id.'"><a href="//imgur.com/'.$link_id.'"></a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>';
+#$cover = '<blockquote class="imgur-embed-pub" lang="en" data-id="'.$full_link_id.'"><a href="//imgur.com/'.$full_link_id.'"></a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>';
+                                                                                                                                                                                    
+        return compact('cover', 'title', 'description', 'images', 'video', 'videoType');
+    }
 }
