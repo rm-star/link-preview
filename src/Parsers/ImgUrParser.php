@@ -128,10 +128,7 @@ class ImgUrParser extends BaseParser implements ParserInterface
     protected function parseImage(LinkInterface $link)
     {
         return [
-            'cover' => $link->getEffectiveUrl(),
-            'images' => [
-                $link->getEffectiveUrl()
-            ]
+            'cover' => '<img src="' . $link->getUrl() . '"><br>',
         ];
     }
 
@@ -169,33 +166,43 @@ class ImgUrParser extends BaseParser implements ParserInterface
             // Parse all images on this page
             foreach($parser->filter('img') as $image) {
                 if (!$image->hasAttribute('src')) continue;
-                if (filter_var($image->getAttribute('src'), FILTER_VALIDATE_URL) === false) continue;
+                $src_url = $image->getAttribute('src');
+
+                if (filter_var($src_url, FILTER_VALIDATE_URL) === false) continue;
 
                 // This is not bulletproof, actual image maybe bigger than tags
-                if ($image->hasAttribute('width') && $image->getAttribute('width') < $this->imageMinimumWidth) continue;
-                if ($image->hasAttribute('height') && $image->getAttribute('height') < $this->imageMinimumHeight) continue;
+                //if ($image->hasAttribute('width') && $image->getAttribute('width') < $this->imageMinimumWidth) continue;
+                //if ($image->hasAttribute('height') && $image->getAttribute('height') < $this->imageMinimumHeight) continue;
 
-                $images[] = $image->getAttribute('src');
+                $images[] = $src_url;
             }
+
+            foreach($parser->filter('div') as $image) {
+                if (!$image->hasAttribute('class')) continue;
+                if ($image->getAttribute('class') != "post-image-container") continue;
+                $src_url = "https://i.imgur.com/" . $image->getAttribute('id') . ".jpg";
+
+                if (filter_var($src_url, FILTER_VALIDATE_URL) === false) continue;
+
+                // This is not bulletproof, actual image maybe bigger than tags
+                //if ($image->hasAttribute('width') && $image->getAttribute('width') < $this->imageMinimumWidth) continue;
+                //if ($image->hasAttribute('height') && $image->getAttribute('height') < $this->imageMinimumHeight) continue;
+
+                $images[] = $src_url;
+            }
+
         } catch (\InvalidArgumentException $e) {
             // Ignore exceptions
         }
 
         $images = array_unique($images);
 
-        preg_match(static::PATTERN, $link->getUrl(), $matches);                                             
-                                                                                                            
-        $full_link_id = $matches[1];                                                                        
-        $link_id = explode( ".", $full_link_id);                                                            
-        $link_id = str_replace('gallery/', 'a/', $link_id[0]);                                                            
-                                                                                                            
-                                                                                                            
-        $width = $this->width;                                                                              
-        $height = $this->height;                                                                            
-                                                                                                                                                                                    
-$cover = '<blockquote class="imgur-embed-pub" lang="en" data-id="'.$link_id.'"><a href="//imgur.com/'.$link_id.'"></a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>';
-#$cover = '<blockquote class="imgur-embed-pub" lang="en" data-id="'.$full_link_id.'"><a href="//imgur.com/'.$full_link_id.'"></a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>';
-                                                                                                                                                                                    
+        //if (!isset($cover) && count($images)) $cover = $images[0];
+        $cover = '';
+        foreach($images as $image_src) {
+            $cover = $cover . '<img src="' . $image_src . '"><br>';
+        }
+
         return compact('cover', 'title', 'description', 'images', 'video', 'videoType');
     }
 }
